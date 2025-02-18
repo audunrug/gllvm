@@ -123,6 +123,7 @@ varPartitioning.gllvm <- function(object, group = NULL, groupnames=NULL, adj.cov
     rownames(BBr) = x_in_model
     # Main effects for X
     if(length(object$params$B)>0) BBr[x_in_model,] = object$params$B[x_in_model]
+    BBr[is.na(BBr[x_in_model,])] <- 0 # to avoid NAs in the intercept
     # Species specific random effects
     BBr[rownames(object$params$Br[x_in_model,]),] <- BBr[rownames(object$params$Br[x_in_model,]),] + object$params$Br[x_in_model,]
     
