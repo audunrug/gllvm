@@ -115,7 +115,7 @@ varPartitioning.gllvm <- function(object, group = NULL, groupnames=NULL, adj.cov
     groupF <- attr(model.matrix(subbars1(reformulate(sprintf("(%s)", sapply(findbars1(object$col.eff$col.eff.formula), deparse1)))), data = as.data.frame(object$col.eff$Xt)), "assign")
     groupF <- groupF[groupF!=0]
 
-    X.d <- object$col.eff$spdr[, colnames(object$col.eff$spdr)!= "Intercept", drop=FALSE]
+    X.d <- object$col.eff$spdr[, colnames(object$col.eff$spdr)!= "Intercept", drop=FALSE] # is this right??
     x_in_model = colnames(X.d)
     
     # Species specific effects total:
