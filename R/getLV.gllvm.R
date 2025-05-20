@@ -22,7 +22,7 @@
 #'@export
 #'@export getLV.gllvm
 
-getLV.gllvm <- function(object, type = NULL, ...)
+getLV.gllvm <- function(object, rotate = FALSE, scale = FALSE, type = NULL, ...)
 {
   n <- nrow(object$y)
   
@@ -78,6 +78,31 @@ getLV.gllvm <- function(object, type = NULL, ...)
     if((object$num.lv.c+object$num.RR)>0&object$num.lv>0)colnames(lvs)<-c(paste("CLV",1:(object$num.lv.c+object$num.RR),sep=""),paste("LV",1:object$num.lv,sep=""))
     if((object$num.lv.c+object$num.RR)>0&object$num.lv==0)colnames(lvs)<-paste("CLV",1:(object$num.lv.c+object$num.RR),sep="")
   }
+  
+  if (rotate) {
+    svd_rotmat_sites <- svd(lvs)$v # SVD rotation matrix
+    lvs <- lvs %*% svd_rotmat_sites # rotate lvs NB: does the scaling affect the svd??
+  }
+  
+  if (scale) {
+    # get species loadings scaled by sigma.lv
+    choose.lv.coefs <- getLoadings.gllvm(object)
+    
+    bothnorms <- vector("numeric",ncol(choose.lv.coefs))
+    for(i in 1:ncol(choose.lv.coefs)){
+      bothnorms[i] <- sqrt(sum(lvs[,i]^2)) * sqrt(sum(choose.lv.coefs[,i]^2))
+    }
+    
+    ## Standardize both to unit norm then scale using bothnorms. Note alpha = 0.5 so both have same norm. Otherwise "significance" becomes scale dependent
+    scaled_cw_sites <- t(t(lvs) / sqrt(colSums(lvs^2)) * (bothnorms^0.5)) 
+    scaled_cw_species <- choose.lv.coefs
+    for(i in 1:ncol(scaled_cw_species)){
+      scaled_cw_species[,i] <- choose.lv.coefs[,i] / sqrt(sum(choose.lv.coefs[,i]^2)) * (bothnorms[i]^(1-0.5)) 
+    }
+    
+    lvs <- scaled_cw_sites
+  }
+  
   
   return(lvs)
 }
