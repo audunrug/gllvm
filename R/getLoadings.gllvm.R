@@ -21,8 +21,10 @@ getLoadings.gllvm <- function(object, scale = FALSE, rotate = FALSE, ...)
   if(object$num.lv>0)sploads[,(ncol(sploads)-object$num.lv+1):ncol(sploads)] <- sploads[,(ncol(sploads)-object$num.lv+1):ncol(sploads)]%*%diag(tail(object$params$sigma.lv, object$num.lv))
   # if(object$num.lv.c>0 & scale)sploads[,1:object$num.lv.c] <- sploads[,1:object$num.lv.c]%*%diag(head(object$params$sigma.lv, object$num.lv.c))
   
+  lvs <- getLV.gllvm(object) # for rotating/scaling loadings
+  
   if (rotate) {
-    svd_rotmat <- svd(getLV.gllvm(object))$v # rotation matrix for sites
+    svd_rotmat <- svd(lvs)$v # rotation matrix for sites
     sploads <- sploads %*% svd_rotmat # rotate loadings
   }
   
