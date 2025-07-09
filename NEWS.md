@@ -1,6 +1,16 @@
 Version 2.0.5
 =============
+* num.RR and num.lv with lvCor can now be combined
+* lvCor can be used with multiple (iid) terms
+* New start.optimizer and start.optim.method arguments for changing the optimizers for generating starting values, related to #229.
+* cex.spp in ordiplot.gllvm can now be a vector
+* Added zero-inflated binomial distribution
+* Added zero-n-inflated binomial distribution
+
+## Bugfixes
 * Bug fixed in VP for mixed effects formula
+* Bug fixed for num.lv.c = 1 models
+* Bug fixed that crashed ordinal models with num.lv>0 and species-specific random effects
 
 Version 2.0.4
 =============
