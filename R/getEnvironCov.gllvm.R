@@ -88,7 +88,7 @@ if(object$col.eff$col.eff=="random" || !is.null(object$randomX)){
     cov.environ.col <- diag(as.numeric(x%*%object$params$sigmaB%*%x), ncol(object$y))
   }else if(length(object$params$rho.sp)==1){
     object$col.eff$colMat <- as.matrix(object$col.eff$colMat*object$params$rho.sp+(1-object$params$rho.sp)*diag(ncol(object$y)))
-    cov.environ.col <- as.matrix(C%*%kronecker(object$col.eff$colMat,object$params$sigmaB)%*%Matrix::t(C))
+    cov.environ.col <- as.matrix(C%*%kronecker(object$params$sigmaB,object$col.eff$colMat)%*%Matrix::t(C))
   }else if(length(object$params$rho.sp)>1){
     Ls<-sapply(object$params$rho.sp,function(rho)t(chol(object$col.eff$colMat*rho+diag(1-rho,ncol(object$col.eff$colMat)))),simplify=FALSE)
     cov.environ.col = as.matrix(C%*%Matrix::bdiag(Ls)%*%kronecker(object$params$sigmaB,diag(ncol(object$col.eff$colMat)))%*%Matrix::t(Matrix::bdiag(Ls))%*%Matrix::t(C))
@@ -139,18 +139,18 @@ if(object$col.eff$col.eff=="random" || !is.null(object$randomX)){
         for(q in 1:(object$num.lv.c+object$num.RR)){
           I[1:ncol(object$lv.X.design)+(q-1)*ncol(object$lv.X.design),q] <- x
         }
-        Sigmaz <- t(I)%*%kronecker(diag(sigma1^2),U)%*%(I)
-        theta <- object$params$theta[,-c(1:(object$num.lv.c+object$num.RR+object$num.lv))][,1:(object$num.lv.c+object$num.RR)]
-        cov.environ.randomB.quad <- sapply(1:(object$num.lv.c+object$num.RR), function(q)2*abs(theta)[,q,drop=F]%*%t(abs(theta[,q,drop=F]))*Sigmaz[q,q],simplify=F)
+        Sigmaz <- t(I)%*%kronecker(diag(sigma1^2, object$num.lv.c+object$num.RR),U)%*%(I)
+        theta <- object$params$theta[,-c(1:(object$num.lv.c+object$num.RR+object$num.lv)),drop=F][,1:(object$num.lv.c+object$num.RR),drop=F]
+        cov.environ.randomB.quad <- sapply(1:(object$num.lv.c+object$num.RR), function(q)2*abs(theta)[,q,drop=F]%*%t(abs(theta[,q,drop=F]))*Sigmaz[q,q]^2,simplify=F)
         trace.environ.randomB.quad <- lapply(cov.environ.randomB.quad, function(x)sum(diag(x)))
       }
     }else if(object$randomB=="single" | object$randomB=="iid"){
-      cov.environ.randomB <- sapply(1:(object$num.lv.c+object$num.RR), function(q)object$params$theta[,q,drop=F]%*%t(object$params$theta[,q,drop=F])*object$params$sigmaLvXcoef^2,simplify=F)
+      cov.environ.randomB <- sapply(1:(object$num.lv.c+object$num.RR), function(q)sum(x^2)*object$params$theta[,q,drop=F]%*%t(object$params$theta[,q,drop=F])*object$params$sigmaLvXcoef^2,simplify=F)
       trace.environ.randomB <- lapply(cov.environ.randomB, function(x)sum(diag(x)))  
       if(!isFALSE(object$quadratic)){
-        Sigmaz <- Reduce("+", sapply(x,function(xk)xk^2*object$params$sigmaLvXcoef,simplify=F))
+        Sigmaz <- Reduce("+", sapply(x,function(xk)xk^2*object$params$sigmaLvXcoef^2,simplify=F))
         # add tr(D_jSigma_zD_kSigma_z) for z = B^t x
-        theta <- object$params$theta[,-c(1:(object$num.lv.c+object$num.RR+object$num.lv))][,1:(object$num.lv.c+object$num.RR)]
+        theta <- object$params$theta[,-c(1:(object$num.lv.c+object$num.RR+object$num.lv)),drop=F][,1:(object$num.lv.c+object$num.RR),drop=F]
         cov.environ.randomB.quad <- sapply(1:(object$num.lv.c+object$num.RR), function(q)2*abs(theta)[,q,drop=F]%*%t(abs(theta[,q,drop=F]))*Sigmaz^2,simplify=F)
         trace.environ.randomB.quad <- lapply(cov.environ.randomB.quad, function(x)sum(diag(x)))
       }
@@ -198,7 +198,7 @@ getEnvironCor <- function(object, ...)
 #'@export getEnvironCor.gllvm
 getEnvironCor.gllvm <- function(object, x = NULL, relative = TRUE, ...)
 {
-  ResCov <- matrix(0, ncol = ncol(object$y), nrow = nrow(object$y))
+  ResCov <- matrix(0, ncol = ncol(object$y), nrow = ncol(object$y))
   if(relative)ResCov <- getResidualCov(object, ...)$cov
   EnvCov <- getEnvironCov.gllvm(object, x)$cov
   sds <- sqrt(diag(ResCov)+diag(EnvCov))
