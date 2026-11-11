@@ -263,6 +263,7 @@
 #'  \item{terms }{ Terms object for main predictors}
 #'  \item{start }{ starting values for model}
 #'  \item{optim.method }{ Optimization method when using 'optim', 'alabama', or 'nloptr'}
+#'  \item{squaredExp }{Flag for squared exponential correlation}
 #'  
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>, Wesley Brooks, Riki Herliansyah, Francis K.C. Hui, Pekka Korhonen, Sara Taskinen, Bert van der Veen, David I. Warton
 #' @references
@@ -452,6 +453,10 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, fa
                   squaredExp=FALSE, # NB change later
                   ...
                   ) {
+  if (squaredExp) {
+    print("squaredExp flag set")
+  }
+  
   # Dthreshold=0,
   if(!isFALSE(quadratic) && !is.null(lvCor) && (num.RR>0 || !is.null(TR)))stop("'lvCor' with unimodal responses cannot yet be combined with 'num.RR' or 'TR'.")
   if(!method%in%c("LA","VA","EVA"))stop("Selected method is not supported.")
