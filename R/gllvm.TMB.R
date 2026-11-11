@@ -8,7 +8,9 @@ gllvm.TMB <- function(y, X = NULL, lv.X = NULL, xr = matrix(0), formula = NULL, 
                       maxit = 3000, max.iter = 200, start.lvs = NULL, offset = NULL, xbSparse = FALSE,
                       trace = FALSE, optimizer.trace = 0, link = "logit", n.init = 1, n.init.max = 10, restrict = 30, start.params = NULL, RElist = NULL, dr = matrix(0), trmsize = matrix(0), csR = matrix(0), proptoMats = list(list(matrix(0))), dLV=NULL, cstruc = "diag", cstruclv = "diag", dist = list(matrix(0)), distLV = matrix(0),
                       optimizer = "optim", starting.val = "res", Power = 1.5, diag.iter = 1, scalmax = 10, MaternKappa = 1.5, rangeP = NULL, zetacutoff = NULL,
-                      Lambda.start = c(0.1,0.5), quad.start = 0.01, jitter.var = 0, jitter.var.br = 0, zeta.struc = "species", quadratic = FALSE, start.struc = "LV", optim.method = "BFGS", disp.group = NULL, NN = matrix(0), setMap = NULL, Ntrials = matrix(1), beta0com = FALSE, csBlv = matrix(0), start.optimizer = "nlminb", start.optim.method = "BFGS") { 
+                      Lambda.start = c(0.1,0.5), quad.start = 0.01, jitter.var = 0, jitter.var.br = 0, zeta.struc = "species", quadratic = FALSE, start.struc = "LV", optim.method = "BFGS", disp.group = NULL, NN = matrix(0), setMap = NULL, Ntrials = matrix(1), beta0com = FALSE, csBlv = matrix(0), start.optimizer = "nlminb", start.optim.method = "BFGS",
+                      squaredExp=FALSE # NB change later
+                      ) { 
 
   # , Dthreshold=0
   # If there is no random effects/LVs set diag iter to zero:
@@ -264,6 +266,11 @@ gllvm.TMB <- function(y, X = NULL, lv.X = NULL, xr = matrix(0), formula = NULL, 
       }
       scaledc<-log(AD1)
       distLV_dc <- as.matrix(stats::dist(as.matrix(distLV)))
+      
+      # Proof-of-concept implementation of squared exponential kernel
+      if (squaredExp) {
+        distLV_dc <- distLV_dc**2
+      }
     }
 
     rho_lvc<- matrix(rep(0, num.lv.cor))
