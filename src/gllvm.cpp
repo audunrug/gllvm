@@ -75,7 +75,7 @@ Type objective_function<Type>::operator() ()
   PARAMETER_VECTOR(sigmaij);// cov terms for random slopes covariance
   PARAMETER_VECTOR(log_sigma);// log(SD for row effect) and 
   PARAMETER_VECTOR(sigmaijr);// cors for row effect
-  PARAMETER_MATRIX(rho_lvc);// correlation parameters for correlated LVs, matrix of q x 1 for corExp/corCS, qx2 for Matern, possibly q x times.cols() for corWithin
+  PARAMETER_MATRIX(rho_lvc);// correlation parameters for correlated LVs, matrix of q x 1 for corExp/corCS/corexp2/periodic, qx2 for Matern/local periodic, possibly q x times.cols() for corWithin
   
   DATA_INTEGER(num_lv); // number of lvs
   DATA_INTEGER(num_lv_c); //number of constrained lvs
@@ -84,6 +84,8 @@ Type objective_function<Type>::operator() ()
   DATA_IVECTOR(family); // family index
   DATA_INTEGER(quadratic); // quadratic model, 0=no, 1=yes
   DATA_INTEGER(randomB); //0 = P,single,iid and 1 = LV
+  DATA_SCALAR(per); // period of correlation for periodic/local periodic function
+  
   PARAMETER_VECTOR(Au); // variational covariances for u
   PARAMETER_VECTOR(lg_Ar); // variational covariances for r0r
   PARAMETER_VECTOR(Abb);  // variational covariances for Br
@@ -105,7 +107,7 @@ Type objective_function<Type>::operator() ()
   DATA_IMATRIX(times); //2 row matrix row 1: dim of LVs, row 2: LV number, used if multiple LVs of different structure/corwithin=TRUE
   DATA_IVECTOR(cstruc); //correlation structure for row.params 0=indep sigma*I, 1=ar1, 2=exponentially decaying, 3=Compound Symm, 4= Matern
   DATA_STRUCT(proptoMats, gllvmutils::nesteddclist); //list of nested lists of length 2, first is the (inverse) matrix, second is the log determinant
-  DATA_IVECTOR(cstruclv); //correlation structure for LVs 0=indep sigma*I, 1=ar1, 2=exponentially decaying, 3=Compound Symm, 4= Matern
+  DATA_IVECTOR(cstruclv); //correlation structure for LVs 0=indep sigma*I, 1=ar1, 2=exponentially decaying, 3=Compound Symm, 4= Matern, 5=squared exponential, 6=periodic, 7= Local periodic (exp2*periodic)
   DATA_STRUCT(dc, gllvmutils::dclist); //coordinates for sites, used for exponentially decaying cov. struc
   DATA_MATRIX(dc_lv); //coordinates for sites, used for exponentially decaying cov. struc
   DATA_INTEGER(Astruc); //Structure of the variational covariance, 0=diagonal, 1=RR, (2=sparse cholesky not implemented yet)
@@ -2630,6 +2632,8 @@ Type objective_function<Type>::operator() ()
                     Slv_q = gllvm::corExp(Type(1), Type(0), nu, dc_scaled_lv);
                   } else if(cstruclv(0)==4) {// Matern
                     Slv_q = gllvm::corMatern(Type(1), Type(1), exp(rho_lvc(q,rho_lvc.cols()-1)), nu, dc_scaled_lv);
+                  } else if(cstruclv(0)==5) {// Matern
+                    
                   }
                 }
 
@@ -5104,6 +5108,22 @@ Type objective_function<Type>::operator() ()
                 Slv = gllvm::corExp(Type(1), Type(0), nu, dc_scaled_lv);
               } else if(cstruclv(0)==4) {// matern
                 Slv = gllvm::corMatern(Type(1), Type(1), exp(rho_lvc(q,rho_lvc.cols()-1)), nu, dc_scaled_lv);
+              }
+              // new kernels (Nov 26)
+              else if(cstruclv(0)==5) {// squared exponential
+                // first argument = l_eq
+                Slv = gllvm::corExp2(Type(1), exp(rho_lvc(q,0)), nu, dc_lv);
+              }
+              else if(cstruclv(0)==6) {// periodic
+                // first argument = l_p, per = period
+                Slv = gllvm::corPer(Type(1), exp(rho_lvc(q,0)), per, nu, dc_lv);
+              }
+              else if(cstruclv(0)==7) {// local periodic
+                // first argument = l_p, second = l_eq, per = period
+                Slv = gllvm::corLocPer(Type(1), 
+                                       exp(rho_lvc(q,0)), 
+                                       exp(rho_lvc(q,rho_lvc.cols()-1)), 
+                                       per, nu, dc_lv);
               }
             }
 

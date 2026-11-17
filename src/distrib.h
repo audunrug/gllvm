@@ -125,6 +125,66 @@ matrix<Type> corMatern(Type s0, Type phi, Type kappa, int nr, matrix<Type> dc)
   return S;
 }
 
+
+//------ new (naive) kernels (Nov 26) ------ //
+// Canonical squared exponential matrix
+// dc is a square pairwise distance matrix (nr x nr) which is NOT already scaled by range parameter
+// ls_eq = (squared) length-scale parameter
+// nr = dimension of matrix
+template <class Type>
+matrix<Type> corExp2(Type s0, Type ls_eq, int nr, matrix<Type> dc)
+{
+  matrix<Type> S(nr,nr);
+  for (int d=0;d<nr;d++) {
+    S(d,d)=s0*s0; // diagonal is 1
+    for (int j=0;j<d;j++){
+      S(d,j)=s0*exp(-((pow(dc(d,j),2))/(ls_eq)));
+      S(j,d)=S(d,j);
+    }
+  }
+  return S;
+}
+
+// Canonical periodic correlation matrix
+// dc is a square pairwise distance matrix (nr x nr) which is NOT already scaled by range parameter
+// ls_p = (squared) periodic length-scale parameter
+// per = length of period
+// nr = dimension of matrix
+template <class Type>
+matrix<Type> corPer(Type s0, Type ls_p, Type per, int nr, matrix<Type> dc)
+{
+  matrix<Type> S(nr,nr);
+  for (int d=0;d<nr;d++) {
+    S(d,d)=s0*s0; // diagonal is 1
+    for (int j=0;j<d;j++){
+      S(d,j)=s0*exp(-((2/ls_p)*(pow(sin(M_PI*(dc(d,j)/per)),2))));
+      S(j,d)=S(d,j);
+    }
+  }
+  return S;
+}
+
+// Local periodic correlation matrix
+// dc is a square pairwise distance matrix (nr x nr) which is NOT already scaled by range parameter
+// ls_p = (squared) periodic length-scale parameter
+// ls_eq = (squared) long-term length-scale parameter
+// per = length of period
+// nr = dimension of matrix
+template <class Type>
+matrix<Type> corLocPer(Type s0, Type ls_p, Type ls_eq, Type per, int nr, matrix<Type> dc)
+{
+  matrix<Type> S(nr,nr);
+  for (int d=0;d<nr;d++) {
+    S(d,d)=s0*s0; // diagonal is 1
+    for (int j=0;j<d;j++){
+      S(d,j)=s0*exp(-((2/ls_p)*(pow(sin(M_PI*(dc(d,j)/per)),2))))*exp(-((pow(dc(d,j),2))/(ls_eq)));
+      S(j,d)=S(d,j);
+    }
+  }
+  return S;
 }
 
 
+
+
+}
